@@ -1,0 +1,281 @@
+---
+title: "STAT 660 Project 1"
+author: "Gorety Oduor"
+date: "2026-05-31"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+# Data Introduction
+This data visualization project utilizes the World Happiness Report datasets spanning the four years from 2017 to 2020. The datasets provide annual rankings of global happiness and include the underlying metrics that contribute to a country's overall score.
+
+Core Variables:
+Country Identifiers: The specific country or region being evaluated. In 2020, a "Regional indicator" (e.g., Western Europe, South Asia) was also explicitly included.
+
+Happiness Score: The primary metric used to rank the countries, representing the subjective well-being of its citizens.
+
+Contributing Factors: Several key metrics are tracked to explain the variations in happiness scores across different nations. These generally include:
+
+Economy: Measured by GDP per capita.
+Social Support: Family or social support structures.
+Health: Healthy life expectancy.
+Freedom: Freedom to make life choices.
+Generosity: Charitable giving and generosity within the society.
+Trust: Perceptions of corruption in government or business.
+
+Because this data spans multiple years, the column naming conventions vary across the files. We will need to standardize these before merging the data for parts of our project (like the multi-year line graph and scatter plot). 
+
+# PART 1: What are the top 10 happiest countries in the most recent year available? Create a barplot arranged in decreasing order by height.
+
+```{r, message=FALSE, warning=FALSE}
+# Load dataset and required libraries
+data_2020 <- read.csv("2020.csv")
+
+library(ggplot2)
+
+# 1. Sort the 2020 data from highest to lowest happiness score and take the top 10
+top_10_2020 <- head(data_2020[order(-data_2020$Ladder.score), ], 10)
+
+# 2. Create the barplot arranged in decreasing order by height
+ggplot(top_10_2020, aes(x = reorder(Country.name, -Ladder.score), y = Ladder.score)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "Top 10 Happiest Countries (2020)", 
+    x = "Country", 
+    y = "Happiness Score"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# PART 2: How has the happiness score changed over the 4 years for China, India, USA, Indonesia, Japan, and Russia? Create one visual with legends.
+
+```{r, message=FALSE, warning=FALSE}
+# 1. Load the datasets 
+data_2017 <- read.csv("2017.csv")
+data_2018 <- read.csv("2018.csv")
+data_2019 <- read.csv("2019.csv")
+data_2020 <- read.csv("2020.csv")
+
+# 2. Extract relevant columns, standardize names, and add a Year column
+df_2017 <- data.frame(Country = data_2017$Country, 
+                      Score = data_2017$Happiness.Score, 
+                      Year = 2017)
+
+df_2018 <- data.frame(Country = data_2018$Country.or.region, 
+                      Score = data_2018$Score, 
+                      Year = 2018)
+
+df_2019 <- data.frame(Country = data_2019$Country.or.region, 
+                      Score = data_2019$Score, 
+                      Year = 2019)
+
+df_2020 <- data.frame(Country = data_2020$Country.name, 
+                      Score = data_2020$Ladder.score, 
+                      Year = 2020)
+
+# 3. Combine all four years into one dataset
+all_years <- rbind(df_2017, df_2018, df_2019, df_2020)
+
+# 4. Filter for the specific countries requested in the prompt
+target_countries <- c("China", "India", "United States", "Indonesia", "Japan", "Russia")
+trend_data <- subset(all_years, Country %in% target_countries)
+
+# 5. Create the line visual with legends
+ggplot(trend_data, aes(x = Year, y = Score, color = Country, group = Country)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(
+    title = "Happiness Score Trend (2017-2020)", 
+    x = "Year", 
+    y = "Happiness Score",
+    color = "Country"
+  ) +
+  # This ensures the x-axis only shows the whole years (2017, 2018, 2019, 2020)
+  scale_x_continuous(breaks = c(2017, 2018, 2019, 2020))
+```
+
+# Graph Interpretation: Happiness Score Trend (2017-2020)
+
+The Highest Performer: The United States consistently maintained the highest happiness score among this group of six countries across all four years. Its score remained relatively stable, hovering near 7.0 (starting at 6.99 in 2017 and ending at 6.94 in 2020).
+
+The Sharpest Decline: India consistently ranked the lowest of the group and experienced the most dramatic downward trend. Its happiness score steadily declined every year, dropping from 4.31 in 2017 down to 3.57 by 2020.
+
+Diverging Paths (Russia & Japan): In 2017, Russia and Japan started with nearly identical scores (5.96 and 5.92, respectively). However, their paths diverged over the next three years. While Japan remained highly stable and mostly flat, Russia experienced a noticeable and consistent decline, ending at 5.54 in 2020.
+
+Intersecting Paths (China & Indonesia): Similarly, China and Indonesia started 2017 with nearly identical scores around 5.26 to 5.27. While China's score experienced a very slow, slight decline over the four years, Indonesia's score dipped in 2018 before steadily climbing back up, ultimately overtaking China by 2020 with a score of 5.28.
+
+# PART 3: Which countries have consistently ranked as the top 10 happiest countries across the 4 years? 
+
+```{r, message=FALSE, warning=FALSE}
+# 1. Get the top 10 countries for each year using the specific column names for each file
+top10_2017 <- head(data_2017[order(-data_2017$Happiness.Score), ]$Country, 10)
+top10_2018 <- head(data_2018[order(-data_2018$Score), ]$Country.or.region, 10)
+top10_2019 <- head(data_2019[order(-data_2019$Score), ]$Country.or.region, 10)
+top10_2020 <- head(data_2020[order(-data_2020$Ladder.score), ]$Country.name, 10)
+
+# 2. Find the countries that appear in all four lists
+consistent_top_countries <- intersect(
+  intersect(
+    intersect(top10_2017, top10_2018), 
+    top10_2019
+  ), 
+  top10_2020
+)
+
+# 3. Print the final list of countries
+print(consistent_top_countries)
+```
+
+# By analyzing the top 10 happiest countries for each individual year, we found that 8 countries consistently ranked in the top 10 across all four years from 2017 to 2020. These consistent top performers are primarily Northern and Western European nations (Norway, Denmark, Iceland, Switzerland, Finland, Netherlands, and Sweden), along with New Zealand
+
+
+# PART 4: Is there a correlation between GDP per capita and happiness score among countries? Does it differ by year? Create a scatter plot with GDP per capita on the x-axis, happiness score on the y-axis, and year as a legend title, with each point representing a country. 
+
+```{r, message=FALSE, warning=FALSE}
+# 1. Extract the specific columns for each year and standardize their names
+df17_gdp <- data.frame(Country = data_2017$Country, 
+                       Happiness_Score = data_2017$Happiness.Score, 
+                       GDP_per_Capita = data_2017$Economy..GDP.per.Capita., 
+                       Year = 2017)
+
+df18_gdp <- data.frame(Country = data_2018$Country.or.region, 
+                       Happiness_Score = data_2018$Score, 
+                       GDP_per_Capita = data_2018$GDP.per.capita, 
+                       Year = 2018)
+
+df19_gdp <- data.frame(Country = data_2019$Country.or.region, 
+                       Happiness_Score = data_2019$Score, 
+                       GDP_per_Capita = data_2019$GDP.per.capita, 
+                       Year = 2019)
+
+# For 2020, we use the 'Explained by' column to match the scale of previous years
+df20_gdp <- data.frame(Country = data_2020$Country.name, 
+                       Happiness_Score = data_2020$Ladder.score, 
+                       GDP_per_Capita = data_2020$Explained.by..Log.GDP.per.capita, 
+                       Year = 2020)
+
+# 2. Merge the datasets by stacking them vertically
+merged_gdp_data <- rbind(df17_gdp, df18_gdp, df19_gdp, df20_gdp)
+
+# 3. Convert Year to a factor so the legend treats it as distinct categories
+merged_gdp_data$Year <- as.factor(merged_gdp_data$Year)
+
+# 4. Create the scatter plot
+ggplot(merged_gdp_data, aes(x = GDP_per_Capita, y = Happiness_Score, color = Year)) +
+  geom_point(alpha = 0.6) + # alpha adds slight transparency to see overlapping points
+  theme_minimal() +
+  labs(
+    title = "Correlation between GDP per Capita and Happiness Score (2017-2020)",
+    x = "GDP per Capita",
+    y = "Happiness Score",
+    color = "Year" # Sets the legend title to "Year" as requested
+  )
+```
+
+# The scatter plot displays a clear, positive correlation between GDP per capita and happiness scores—as a country's economic output increases, its happiness score generally trends upwards. When analyzing the points by year (indicated by the color legend), the overall positive trajectory remains highly consistent across all four years from 2017 to 2020, meaning the fundamental relationship between national wealth and subjective well-being did not drastically change during this period.
+
+# PART 5: Based on the 2020 data, how does the distribution of happiness scores vary across different regions of the world? Create box plots or violin plots displaying the distribution of happiness scores for each region, helping to compare their medians, quartiles, and outliers.
+
+```{r, message=FALSE, warning=FALSE}
+# Load necessary libraries 
+library(treemap)
+
+# 1. Load the GNI2014 dataset from the treemap package
+data(GNI2014)
+
+# 2. Merge the 2020 data with GNI2014 to get the regional (continent) classifications
+# 'Country.name' is from our 2020 data; 'country' is from GNI2014
+merged_2020_region <- merge(data_2020, GNI2014, by.x = "Country.name", by.y = "country", all.x = TRUE)
+
+# 3. Create the box plot to show medians, quartiles, and outliers
+# We drop NA values in the plot to keep the graph clean in case some country names didn't 
+# perfectly 
+# match
+ggplot(subset(merged_2020_region, !is.na(continent)), aes(x = continent, y = Ladder.score, 
+                                                          fill = continent)) +
+  geom_boxplot(alpha = 0.8) +
+  theme_minimal() +
+  labs(
+    title = "Distribution of Happiness Scores by Region (2020)",
+    x = "Region (Continent)",
+    y = "Happiness Score",
+    fill = "Region"
+  ) +
+  # We angle the text so the region names are easy to read
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# The box plot reveals significant variations in happiness across global regions. Europe exhibits the highest overall happiness distribution, with its median score sitting noticeably higher than other regions. In contrast, Africa shows the lowest median happiness score and a tightly clustered distribution toward the bottom of the scale. The Americas and Asia display much wider spreads in their happiness scores (larger boxes/whiskers), indicating higher internal disparity in subjective well-being among countries within those continents.
+
+# PART 6: Based on the 2020 data, what is the relationship between social support and life expectancy in terms of their impact on happiness? Create a bubble plot with life expectancy on the x-axis, social support on the y-axis, and bubble size representing happiness score. This can help explore how social support and life expectancy jointly contribute to happiness.
+
+```{r, message=FALSE, warning=FALSE}
+# Create the bubble plot
+ggplot(data_2020, aes(x = Healthy.life.expectancy, y = Social.support, size = Ladder.score)) +
+  # alpha = 0.6 adds transparency, color sets the bubble color
+  geom_point(alpha = 0.6, color = "darkgreen") +
+  # scale_size adjusts the minimum and maximum sizes of the bubbles
+  scale_size(range = c(1, 10)) + 
+  theme_minimal() +
+  labs(
+    title = "Impact of Social Support & Life Expectancy on Happiness (2020)",
+    x = "Healthy Life Expectancy",
+    y = "Social Support",
+    size = "Happiness Score"
+  )
+```
+
+# The bubble plot illustrates a strong positive relationship between social support, healthy life expectancy, and overall happiness. Countries located in the top-right quadrant—boasting both high social support and long life expectancies—are represented by the largest bubbles, indicating the highest happiness scores. Conversely, countries in the bottom-left quadrant (lower life expectancy and weaker social support) consistently feature the smallest bubbles. This visual confirms that strong social safety nets and better health outcomes jointly contribute to a higher national happiness score.
+
+# PART 7: Create a treemap for year 2020, using color index to display the countries in order of numerical ranking. 
+
+```{r, message=FALSE, warning=FALSE}
+# 1. Create a numerical rank column based on the Ladder score (highest score = Rank 1)
+data_2020$Rank <- rank(-data_2020$Ladder.score)
+
+# 2. Generate the Treemap
+treemap(data_2020,
+        index = "Country.name",     # The label for each box
+        vSize = "Ladder.score",     # The size of the box
+        vColor = "Rank",            # Color mapped to the numerical ranking
+        type = "value",             # Tells the plot to use the exact Rank values for the color scale
+        title = "Treemap of Happiness Rankings by Country (2020)",
+        palette = "-RdYlBu",        # A Red-Yellow-Blue palette (negative flips it so Rank 1 is distinct)
+        lowerbound.cex.labels = 0.5 # Adjusts text size for smaller boxes
+)
+```
+
+# The treemap utilizes a color gradient to represent the numerical ranking of each country's happiness score. According to the legend at the bottom, lighter yellow colors represent lower numerical ranks (e.g., 1-20, which are the happiest countries), while the colors transition through orange and red to a dark maroon for the highest numerical ranks (e.g., 140-160, which are the least happy countries)
+
+# The 2020 Treemap effectively visualizes global happiness tiers by mapping numerical ranks to a color gradient. The color-coding allows for immediate visual grouping: light yellow boxes instantly identify the world's happiest countries (primarily in Northern Europe), orange tones highlight mid-ranking nations (such as the US and Japan), and dark red boxes point to the lowest-ranking countries (like India and Haiti).
+
+# PART 8: Create a choropleth map colored by the happiness score for different regions
+
+```{r, message=FALSE, warning=FALSE}
+# Load necessary packages 
+library(maps)
+
+# 1. Get world map data
+world_map <- map_data("world")
+
+# 2. Merge the world map data with our 2020 dataset
+# Match 'region' from the map to 'Country.name' from our 2020 data
+merged_data <- merge(world_map, data_2020, by.x = "region", by.y = "Country.name", all.x = TRUE)
+
+# IMPORTANT: Merging scrambles the polygon drawing order. We must sort it back
+merged_data <- merged_data[order(merged_data$order), ]
+
+# 3. Create the choropleth map colored by the happiness score
+ggplot(merged_data, aes(x = long, y = lat, group = group, fill = Ladder.score)) +
+  geom_polygon(color = "black", size = 0.1) +
+  coord_fixed(ratio = 1.25) +
+  scale_fill_gradient(low = "red", high = "green", name = "Happiness Score", na.value = "lightgray") +
+  theme_void() + # Removes axis numbers and grid lines for a clean map look
+  labs(title = "Choropleth Map of Global Happiness Scores (2020)")
+```
+
+# The choropleth map provides a stark geographic visualization of global well-being in 2020. The brightest green regions, indicating the highest happiness scores, are heavily concentrated in North America, Western/Northern Europe, and Australia/New Zealand. Conversely, the darkest red regions, representing the lowest happiness scores, are largely clustered across parts of Sub-Saharan Africa (such as Zimbabwe and South Sudan) and South Asia (such as India and Afghanistan). Countries shaded in gray represent regions where 2020 happiness data was unavailable or country name formatting differed.
